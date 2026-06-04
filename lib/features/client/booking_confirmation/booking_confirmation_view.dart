@@ -205,13 +205,32 @@ class _BookingConfirmationViewState extends State<BookingConfirmationView> {
                         ),
                         const SizedBox(height: 32),
                         // ── Botones ────────────────────────────
-                        PrimaryButton(
-                          label: 'Ver seguimiento',
-                          icon: Icons.track_changes_rounded,
-                          onPressed: () => context.push(
-                            '${RouteNames.clientServiceTracking}/${s.id ?? "mock"}',
-                            extra: {'solicitud': s, 'trabajador': w},
+                        if (vm.error != null) ...[
+                          Text(
+                            vm.error!,
+                            style: const TextStyle(color: AppColors.error),
                           ),
+                          const SizedBox(height: 12),
+                        ],
+                        PrimaryButton(
+                          label: vm.isLoading
+                              ? 'Confirmando...'
+                              : 'Confirmar y ver seguimiento',
+                          icon: Icons.track_changes_rounded,
+                          onPressed: vm.isLoading
+                              ? null
+                              : () async {
+                                  final ok = await vm.confirmar();
+                                  if (!context.mounted || !ok) return;
+                                  final updated = vm.solicitud ?? s;
+                                  context.push(
+                                    '${RouteNames.clientServiceTracking}/${updated.id ?? "mock"}',
+                                    extra: {
+                                      'solicitud': updated,
+                                      'trabajador': w,
+                                    },
+                                  );
+                                },
                         ),
                         const SizedBox(height: 12),
                         SizedBox(
