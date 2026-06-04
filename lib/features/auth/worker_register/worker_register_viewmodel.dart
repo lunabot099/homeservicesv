@@ -10,7 +10,6 @@
 library;
 
 import 'package:flutter/foundation.dart';
-import '../../../app/config/app_config.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/perfiles_repository.dart';
 import '../../../data/models/perfil_model.dart';
@@ -56,17 +55,6 @@ class WorkerRegisterViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (AppConfig.demoMode) {
-        await _sessionController.startDemoSession(
-          role: UserRole.trabajador,
-          nombreCompleto: nombreCompleto,
-          correo: correo,
-          telefono: telefono,
-        );
-        _registroExitoso = true;
-        return true;
-      }
-
       // 1. Crear cuenta en Auth — genera auth.users.id único
       final user = await _authRepository.signUp(
         email: correo,

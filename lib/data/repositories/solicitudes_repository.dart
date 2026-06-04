@@ -3,27 +3,19 @@
 library;
 
 import '../models/solicitud_servicio_model.dart';
-import '../../app/config/app_config.dart';
 import '../services/solicitudes_service.dart';
 
 class SolicitudesRepository {
-  SolicitudesService? _service;
+  final SolicitudesService _service;
 
-  SolicitudesRepository({SolicitudesService? service}) : _service = service;
-
-  SolicitudesService get _activeService {
-    if (AppConfig.demoMode) {
-      throw StateError('SolicitudesService no está disponible en modo demo.');
-    }
-    return _service ??= SolicitudesService();
-  }
+  SolicitudesRepository({SolicitudesService? service})
+      : _service = service ?? SolicitudesService();
 
   // ── Cliente ───────────────────────────────────────────────────
 
   Future<SolicitudServicioModel> createSolicitud(SolicitudServicioModel s) async {
     try {
-      if (AppConfig.demoMode) return s;
-      return await _activeService.createSolicitud(s);
+      return await _service.createSolicitud(s);
     } catch (e) {
       throw Exception('No se pudo crear la solicitud: $e');
     }
@@ -32,8 +24,7 @@ class SolicitudesRepository {
   Future<List<SolicitudServicioModel>> getSolicitudesByCliente(
       String clienteId) async {
     try {
-      if (AppConfig.demoMode) return [];
-      return await _activeService.getSolicitudesByCliente(clienteId);
+      return await _service.getSolicitudesByCliente(clienteId);
     } catch (e) {
       throw Exception('No se pudieron obtener las solicitudes: $e');
     }
@@ -41,8 +32,7 @@ class SolicitudesRepository {
 
   Future<SolicitudServicioModel?> getSolicitudById(String id) async {
     try {
-      if (AppConfig.demoMode) return null;
-      return await _activeService.getSolicitudById(id);
+      return await _service.getSolicitudById(id);
     } catch (e) {
       throw Exception('No se pudo obtener la solicitud: $e');
     }
@@ -50,8 +40,7 @@ class SolicitudesRepository {
 
   Future<void> cancelarSolicitud(String id) async {
     try {
-      if (AppConfig.demoMode) return;
-      await _activeService.cancelarSolicitud(id);
+      await _service.cancelarSolicitud(id);
     } catch (e) {
       throw Exception('No se pudo cancelar la solicitud: $e');
     }
@@ -65,8 +54,7 @@ class SolicitudesRepository {
     String? categoriaId,
   }) async {
     try {
-      if (AppConfig.demoMode) return [];
-      return await _activeService.getSolicitudesDisponibles(
+      return await _service.getSolicitudesDisponibles(
           departamento: departamento, categoriaId: categoriaId);
     } catch (e) {
       throw Exception('No se pudieron obtener solicitudes disponibles: $e');
@@ -77,8 +65,7 @@ class SolicitudesRepository {
   Future<List<SolicitudServicioModel>> getSolicitudesActivasTrabajador(
       String trabajadorId) async {
     try {
-      if (AppConfig.demoMode) return [];
-      return await _activeService.getSolicitudesActivasTrabajador(trabajadorId);
+      return await _service.getSolicitudesActivasTrabajador(trabajadorId);
     } catch (e) {
       throw Exception('No se pudieron obtener solicitudes activas: $e');
     }
@@ -88,8 +75,7 @@ class SolicitudesRepository {
   Future<List<SolicitudServicioModel>> getHistorialTrabajador(
       String trabajadorId) async {
     try {
-      if (AppConfig.demoMode) return [];
-      return await _activeService.getHistorialTrabajador(trabajadorId);
+      return await _service.getHistorialTrabajador(trabajadorId);
     } catch (e) {
       throw Exception('No se pudo obtener historial: $e');
     }
@@ -104,14 +90,7 @@ class SolicitudesRepository {
     String? trabajadorId,
   }) async {
     try {
-      if (AppConfig.demoMode) {
-        final solicitud = await getSolicitudById(id);
-        if (solicitud == null) {
-          throw Exception('Solicitud demo no encontrada.');
-        }
-        return solicitud.copyWith(estado: estado, trabajadorId: trabajadorId);
-      }
-      return await _activeService.updateEstado(
+      return await _service.updateEstado(
         id: id,
         estado: estado,
         trabajadorId: trabajadorId,
@@ -124,32 +103,26 @@ class SolicitudesRepository {
   // ── Realtime ──────────────────────────────────────────────────
 
   Stream<SolicitudServicioModel?> streamSolicitud(String solicitudId) =>
-      AppConfig.demoMode
-          ? Stream<SolicitudServicioModel?>.empty()
-          : _activeService.streamSolicitud(solicitudId);
+      _service.streamSolicitud(solicitudId);
 
   Stream<List<SolicitudServicioModel>> streamSolicitudesDisponibles({
     String? departamento,
   }) =>
-      AppConfig.demoMode
-          ? Stream<List<SolicitudServicioModel>>.value([])
-          : _activeService.streamSolicitudesDisponibles(departamento: departamento);
+      _service.streamSolicitudesDisponibles(departamento: departamento);
 
   // ── Expiración automática ─────────────────────────────────────────────────
 
   /// Expira solicitudes sin aceptar con más de 1 hora de antigüedad.
   Future<void> expirarSolicitudesAntiguas() async {
     try {
-      if (AppConfig.demoMode) return;
-      await _activeService.expirarSolicitudesAntiguas();
+      await _service.expirarSolicitudesAntiguas();
     } catch (_) {}
   }
 
   /// Elimina solicitudes expiradas con más de 90 minutos de antigüedad.
   Future<void> limpiarExpiradas() async {
     try {
-      if (AppConfig.demoMode) return;
-      await _activeService.limpiarExpiradas();
+      await _service.limpiarExpiradas();
     } catch (_) {}
   }
 }

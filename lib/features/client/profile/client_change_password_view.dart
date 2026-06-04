@@ -4,7 +4,6 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../app/config/app_config.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/widgets/custom_text_field.dart';
@@ -43,14 +42,10 @@ class _ClientChangePasswordViewState extends State<ClientChangePasswordView> {
       _success = null;
     });
     try {
-      if (!AppConfig.demoMode) {
-        await Supabase.instance.client.auth.updateUser(
-          UserAttributes(password: _newPassCtrl.text),
-        );
-      }
-      setState(() => _success = AppConfig.demoMode
-          ? 'Contraseña validada en modo demo. Se actualizará realmente al conectar Supabase.'
-          : 'Contraseña actualizada correctamente.');
+      await Supabase.instance.client.auth.updateUser(
+        UserAttributes(password: _newPassCtrl.text),
+      );
+      setState(() => _success = 'Contraseña actualizada correctamente.');
       _newPassCtrl.clear();
       _confirmCtrl.clear();
     } catch (e) {

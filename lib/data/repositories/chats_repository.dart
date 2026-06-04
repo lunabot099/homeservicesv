@@ -4,33 +4,18 @@ library;
 
 import '../models/chat_model.dart';
 import '../models/mensaje_chat_model.dart';
-import '../../app/config/app_config.dart';
 import '../services/chats_service.dart';
 import '../services/mensajes_service.dart';
 
 class ChatsRepository {
-  ChatsService? _chatsService;
-  MensajesService? _mensajesService;
+  final ChatsService _chatsService;
+  final MensajesService _mensajesService;
 
   ChatsRepository({
     ChatsService? chatsService,
     MensajesService? mensajesService,
-  })  : _chatsService = chatsService,
-        _mensajesService = mensajesService;
-
-  ChatsService get _activeChatsService {
-    if (AppConfig.demoMode) {
-      throw StateError('ChatsService no está disponible en modo demo.');
-    }
-    return _chatsService ??= ChatsService();
-  }
-
-  MensajesService get _activeMensajesService {
-    if (AppConfig.demoMode) {
-      throw StateError('MensajesService no está disponible en modo demo.');
-    }
-    return _mensajesService ??= MensajesService();
-  }
+  })  : _chatsService = chatsService ?? ChatsService(),
+        _mensajesService = mensajesService ?? MensajesService();
 
   // ── Chat ─────────────────────────────────────────────────────
 
@@ -41,16 +26,7 @@ class ChatsRepository {
     required String trabajadorId,
   }) async {
     try {
-      if (AppConfig.demoMode) {
-        return ChatModel(
-          id: 'demo-chat-$solicitudId',
-          solicitudId: solicitudId,
-          clienteId: clienteId,
-          trabajadorId: trabajadorId,
-          creadoEn: DateTime.now(),
-        );
-      }
-      return await _activeChatsService.getOCrear(
+      return await _chatsService.getOCrear(
         solicitudId: solicitudId,
         clienteId: clienteId,
         trabajadorId: trabajadorId,
@@ -63,8 +39,7 @@ class ChatsRepository {
   /// Obtiene el chat de una solicitud.
   Future<ChatModel?> getChatDeSolicitud(String solicitudId) async {
     try {
-      if (AppConfig.demoMode) return null;
-      return await _activeChatsService.getBySolicitud(solicitudId);
+      return await _chatsService.getBySolicitud(solicitudId);
     } catch (e) {
       throw Exception('Error al obtener chat: $e');
     }
@@ -73,8 +48,7 @@ class ChatsRepository {
   /// Obtiene todos los chats del usuario.
   Future<List<ChatModel>> getMisChats(String userId) async {
     try {
-      if (AppConfig.demoMode) return [];
-      return await _activeChatsService.getMisChats(userId);
+      return await _chatsService.getMisChats(userId);
     } catch (e) {
       throw Exception('Error al obtener chats: $e');
     }
@@ -83,8 +57,7 @@ class ChatsRepository {
   /// Programa la eliminación de mensajes (llamar al completar servicio).
   Future<void> programarLimpieza(String chatId) async {
     try {
-      if (AppConfig.demoMode) return;
-      await _activeChatsService.programarEliminacion(chatId);
+      await _chatsService.programarEliminacion(chatId);
     } catch (e) {
       throw Exception('Error al programar limpieza: $e');
     }
@@ -99,15 +72,12 @@ class ChatsRepository {
     required String texto,
   }) async {
     try {
-      final mensaje = MensajeChatModel(
+      return await _mensajesService.enviar(MensajeChatModel(
         chatId: chatId,
         remitenteId: remitenteId,
         tipo: TipoMensaje.texto,
         contenido: texto,
-        creadoEn: DateTime.now(),
-      );
-      if (AppConfig.demoMode) return mensaje;
-      return await _activeMensajesService.enviar(mensaje);
+      ));
     } catch (e) {
       throw Exception('Error al enviar mensaje: $e');
     }
@@ -120,15 +90,12 @@ class ChatsRepository {
     required String archivoUrl,
   }) async {
     try {
-      final mensaje = MensajeChatModel(
+      return await _mensajesService.enviar(MensajeChatModel(
         chatId: chatId,
         remitenteId: remitenteId,
         tipo: TipoMensaje.imagen,
         archivoUrl: archivoUrl,
-        creadoEn: DateTime.now(),
-      );
-      if (AppConfig.demoMode) return mensaje;
-      return await _activeMensajesService.enviar(mensaje);
+      ));
     } catch (e) {
       throw Exception('Error al enviar imagen: $e');
     }
@@ -138,8 +105,7 @@ class ChatsRepository {
   Future<List<MensajeChatModel>> getMensajes(String chatId,
       {int limit = 50}) async {
     try {
-      if (AppConfig.demoMode) return [];
-      return await _activeMensajesService.getMensajes(chatId, limit: limit);
+      return await _mensajesService.getMensajes(chatId, limit: limit);
     } catch (e) {
       throw Exception('Error al obtener mensajes: $e');
     }
@@ -147,8 +113,7 @@ class ChatsRepository {
 
   /// [Realtime] Stream de mensajes del chat.
   Stream<List<MensajeChatModel>> streamMensajes(String chatId) {
-    if (AppConfig.demoMode) return Stream<List<MensajeChatModel>>.value([]);
-    return _activeMensajesService.streamMensajes(chatId);
+    return _mensajesService.streamMensajes(chatId);
   }
 
   /// Marca todos los mensajes como leídos para el usuario actual.
@@ -157,8 +122,7 @@ class ChatsRepository {
     required String usuarioId,
   }) async {
     try {
-      if (AppConfig.demoMode) return;
-      await _activeMensajesService.marcarLeidos(
+      await _mensajesService.marcarLeidos(
           chatId: chatId, usuarioId: usuarioId);
     } catch (e) {
       throw Exception('Error al marcar mensajes: $e');
@@ -171,8 +135,7 @@ class ChatsRepository {
     required String contenido,
   }) async {
     try {
-      if (AppConfig.demoMode) return;
-      await _activeMensajesService.enviarMensajeSistema(
+      await _mensajesService.enviarMensajeSistema(
           chatId: chatId, contenido: contenido);
     } catch (e) {
       // Silencioso — los mensajes de sistema no son críticos
