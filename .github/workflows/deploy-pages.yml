@@ -1,0 +1,68 @@
+name: Deploy Flutter Web to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create .env for Flutter web build
+        run: |
+          cat > .env <<'EOF'
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          BUCKET_PERFIL_FOTOS=${{ secrets.BUCKET_PERFIL_FOTOS }}
+          BUCKET_DUI_DOCUMENTOS=${{ secrets.BUCKET_DUI_DOCUMENTOS }}
+          BUCKET_ANTECEDENTES_DOCUMENTOS=${{ secrets.BUCKET_ANTECEDENTES_DOCUMENTOS }}
+          BUCKET_SOLICITUDES_IMAGENES=${{ secrets.BUCKET_SOLICITUDES_IMAGENES }}
+          BUCKET_CHAT_IMAGENES=${{ secrets.BUCKET_CHAT_IMAGENES }}
+          EOF
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Build web
+        run: flutter build web --release --base-href /homeservicesv/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
