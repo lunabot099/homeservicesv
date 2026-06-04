@@ -12,23 +12,33 @@ class Env {
   // ── Supabase ─────────────────────────────────────────────────
 
   /// URL del proyecto Supabase (ejemplo: https://xxx.supabase.co)
-  static String get supabaseUrl {
+  static String? get optionalSupabaseUrl {
     final value = dotenv.env['SUPABASE_URL'];
-    assert(
-      value != null && value.isNotEmpty,
-      'SUPABASE_URL no está definida en .env',
-    );
-    return value!;
+    if (value == null || value.trim().isEmpty) return null;
+    return value.trim();
+  }
+
+  static String get supabaseUrl {
+    final value = optionalSupabaseUrl;
+    if (value == null) {
+      throw StateError('SUPABASE_URL no está definida en .env');
+    }
+    return value;
   }
 
   /// Clave anónima pública de Supabase
-  static String get supabaseAnonKey {
+  static String? get optionalSupabaseAnonKey {
     final value = dotenv.env['SUPABASE_ANON_KEY'];
-    assert(
-      value != null && value.isNotEmpty,
-      'SUPABASE_ANON_KEY no está definida en .env',
-    );
-    return value!;
+    if (value == null || value.trim().isEmpty) return null;
+    return value.trim();
+  }
+
+  static String get supabaseAnonKey {
+    final value = optionalSupabaseAnonKey;
+    if (value == null) {
+      throw StateError('SUPABASE_ANON_KEY no está definida en .env');
+    }
+    return value;
   }
 
   // ── Storage Buckets ──────────────────────────────────────────

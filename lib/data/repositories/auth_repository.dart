@@ -5,13 +5,20 @@
 library;
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../app/config/app_config.dart';
 import '../services/auth_service.dart';
 
 class AuthRepository {
-  final AuthService _authService;
+  AuthService? _authService;
 
-  AuthRepository({AuthService? authService})
-      : _authService = authService ?? AuthService();
+  AuthRepository({AuthService? authService}) : _authService = authService;
+
+  AuthService get _service {
+    if (AppConfig.demoMode) {
+      throw StateError('AuthService no está disponible en modo demo.');
+    }
+    return _authService ??= AuthService();
+  }
 
   /// Intenta iniciar sesión con email y contraseña.
   /// Retorna el [User] en caso de éxito.
@@ -21,7 +28,7 @@ class AuthRepository {
     required String password,
   }) async {
     try {
-      final response = await _authService.signInWithEmail(
+      final response = await _service.signInWithEmail(
         email: email,
         password: password,
       );
@@ -44,7 +51,7 @@ class AuthRepository {
     String? nombreCompleto,
   }) async {
     try {
-      final response = await _authService.signUpWithEmail(
+      final response = await _service.signUpWithEmail(
         email: email,
         password: password,
         nombreCompleto: nombreCompleto,
@@ -62,19 +69,23 @@ class AuthRepository {
 
   /// Cierra la sesión del usuario actual.
   Future<void> signOut() async {
-    await _authService.signOut();
+    if (AppConfig.demoMode) return;
+    await _service.signOut();
   }
 
   /// Retorna el usuario autenticado actualmente, o null.
-  User? get currentUser => _authService.currentUser;
+  User? get currentUser => AppConfig.demoMode ? null : _service.currentUser;
 
   /// Stream de cambios de estado de autenticación.
-  Stream<AuthState> get authStateChanges => _authService.onAuthStateChange;
+  Stream<AuthState> get authStateChanges => AppConfig.demoMode
+      ? Stream<AuthState>.empty()
+      : _service.onAuthStateChange;
 
   /// Envía email para restablecer contraseña.
   Future<void> resetPassword(String email) async {
     try {
-      await _authService.resetPassword(email);
+      if (AppConfig.demoMode) return;
+      await _service.resetPassword(email);
     } on AuthException catch (e) {
       throw Exception(_mapAuthError(e.message));
     }

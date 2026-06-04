@@ -6,6 +6,7 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../app/config/app_config.dart';
 import '../data/models/perfil_model.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/perfiles_repository.dart';
@@ -16,6 +17,7 @@ class SessionController extends ChangeNotifier {
 
   User? _currentUser;
   PerfilModel? _currentPerfil;
+  bool _isDemoAuthenticated = false;
   bool _isLoading = false;
   String? _error;
 
@@ -24,10 +26,11 @@ class SessionController extends ChangeNotifier {
     PerfilesRepository? perfilesRepository,
   })  : _authRepository = authRepository ?? AuthRepository(),
         _perfilesRepository = perfilesRepository ?? PerfilesRepository() {
-    // Escuchar cambios de autenticación automáticamente
-    _authRepository.authStateChanges.listen(_onAuthStateChanged);
-    // Cargar sesión inicial si ya hay usuario
-    _initSession();
+    if (!AppConfig.demoMode) {
+      // Escuchar cambios de autenticación automáticamente solo con Supabase activo.
+      _authRepository.authStateChanges.listen(_onAuthStateChanged);
+      _initSession();
+    }
   }
 
   // ── Getters ─────────────────────────────────────────────────
@@ -35,7 +38,7 @@ class SessionController extends ChangeNotifier {
   PerfilModel? get currentPerfil => _currentPerfil;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  bool get isAuthenticated => _currentUser != null;
+  bool get isAuthenticated => _currentUser != null || _isDemoAuthenticated;
   UserRole? get currentRole => _currentPerfil?.rol;
 
   // ── Inicialización ───────────────────────────────────────────
@@ -77,8 +80,28 @@ class SessionController extends ChangeNotifier {
 
   /// Fuerza la recarga del perfil del usuario actual.
   Future<void> refreshPerfil() async {
+    if (AppConfig.demoMode) return;
     if (_currentUser == null) return;
     await _loadPerfil(_currentUser!.id);
+  }
+
+  /// Inicia una sesión local/demo sin tocar Supabase.
+  Future<void> startDemoSession({
+    required UserRole role,
+    required String nombreCompleto,
+    required String correo,
+    String? telefono,
+  }) async {
+    _isDemoAuthenticated = true;
+    _currentPerfil = PerfilModel(
+      id: 'demo-${role.name}',
+      nombreCompleto: nombreCompleto,
+      correo: correo,
+      telefono: telefono,
+      rol: role,
+    );
+    _error = null;
+    notifyListeners();
   }
 
   /// Cierra la sesión del usuario.
@@ -88,9 +111,12 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _authRepository.signOut();
+      if (!AppConfig.demoMode) {
+        await _authRepository.signOut();
+      }
       _currentUser = null;
       _currentPerfil = null;
+      _isDemoAuthenticated = false;
     } catch (e) {
       _error = e.toString();
     } finally {

@@ -13,6 +13,7 @@ import '../../../data/models/worker_profile_model.dart';
 import '../../../data/repositories/perfiles_repository.dart';
 import '../../../data/repositories/workers_repository.dart';
 import '../../../data/services/storage_service.dart';
+import '../../../app/config/app_config.dart';
 import '../../../data/services/supabase_client_service.dart';
 import '../../../state/session_controller.dart';
 
@@ -149,6 +150,7 @@ class WorkerProfileViewModel extends ChangeNotifier {
   /// la copia a `perfiles.foto_perfil_url` para que quede como
   /// fuente principal desde ese momento.
   Future<void> _sincronizarFotoDesdeFormulario(String userId) async {
+    if (AppConfig.demoMode) return;
     try {
       final data = await SupabaseClientService.client
           .from('formulario_trabajador')

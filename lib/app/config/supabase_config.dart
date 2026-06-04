@@ -4,18 +4,25 @@
 library;
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'app_config.dart';
 import 'env.dart';
 
 class SupabaseConfig {
   SupabaseConfig._(); // No instanciar
 
-  /// Inicializa Supabase con las credenciales del archivo .env.
-  /// Debe llamarse dentro de main() antes de runApp().
+  /// Inicializa Supabase solo si hay credenciales reales en `.env`.
+  /// Si faltan, activa modo demo/local para que la app siga funcionando.
   static Future<void> initialize() async {
-    await Supabase.initialize(
-      url: Env.supabaseUrl,
-      anonKey: Env.supabaseAnonKey,
-    );
+    final url = Env.optionalSupabaseUrl;
+    final anonKey = Env.optionalSupabaseAnonKey;
+
+    if (url == null || anonKey == null) {
+      AppConfig.enableDemoMode();
+      return;
+    }
+
+    await Supabase.initialize(url: url, anonKey: anonKey);
+    AppConfig.enableSupabase();
   }
 
   /// Acceso directo al cliente de Supabase ya inicializado.

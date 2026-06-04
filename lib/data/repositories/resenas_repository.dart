@@ -3,18 +3,26 @@
 library;
 
 import '../models/resena_model.dart';
+import '../../app/config/app_config.dart';
 import '../services/resenas_service.dart';
 
 class ResenasRepository {
-  final ResenasService _service;
+  ResenasService? _service;
 
-  ResenasRepository({ResenasService? service})
-      : _service = service ?? ResenasService();
+  ResenasRepository({ResenasService? service}) : _service = service;
+
+  ResenasService get _activeService {
+    if (AppConfig.demoMode) {
+      throw StateError('ResenasService no está disponible en modo demo.');
+    }
+    return _service ??= ResenasService();
+  }
 
   Future<ResenaModel> createResena(ResenaModel resena) async {
     try {
+      if (AppConfig.demoMode) return resena;
       // Verificar si ya calificó
-      final yaExiste = await _service.yaCalificado(
+      final yaExiste = await _activeService.yaCalificado(
         solicitudId: resena.solicitudId,
         emisorId: resena.emisorId,
         tipo: resena.tipo,
@@ -22,7 +30,7 @@ class ResenasRepository {
       if (yaExiste) {
         throw Exception('Ya enviaste una reseña para este servicio.');
       }
-      return await _service.createResena(resena);
+      return await _activeService.createResena(resena);
     } catch (e) {
       throw Exception('No se pudo guardar la reseña: ${e.toString().replaceFirst('Exception: ', '')}');
     }
@@ -31,7 +39,8 @@ class ResenasRepository {
   /// Reseñas recibidas por un trabajador.
   Future<List<ResenaModel>> getResenasByTrabajador(String trabajadorId) async {
     try {
-      return await _service.getResenasByTrabajador(trabajadorId);
+      if (AppConfig.demoMode) return [];
+      return await _activeService.getResenasByTrabajador(trabajadorId);
     } catch (e) {
       throw Exception('No se pudieron obtener las reseñas: $e');
     }
@@ -40,7 +49,8 @@ class ResenasRepository {
   /// Reseñas enviadas por un cliente.
   Future<List<ResenaModel>> getResenasByCliente(String clienteId) async {
     try {
-      return await _service.getResenasByCliente(clienteId);
+      if (AppConfig.demoMode) return [];
+      return await _activeService.getResenasByCliente(clienteId);
     } catch (e) {
       throw Exception('No se pudieron obtener tus reseñas: $e');
     }
@@ -50,7 +60,8 @@ class ResenasRepository {
   Future<List<ResenaModel>> getResenasDeTrabajadorAClientes(
       String trabajadorId) async {
     try {
-      return await _service.getResenasDeTrabajadorAClientes(trabajadorId);
+      if (AppConfig.demoMode) return [];
+      return await _activeService.getResenasDeTrabajadorAClientes(trabajadorId);
     } catch (e) {
       throw Exception('No se pudieron obtener las reseñas: $e');
     }

@@ -4,6 +4,7 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../app/config/app_config.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/perfiles_repository.dart';
 import '../../../data/models/perfil_model.dart';
@@ -45,6 +46,17 @@ class ClientRegisterViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (AppConfig.demoMode) {
+        await _sessionController.startDemoSession(
+          role: UserRole.cliente,
+          nombreCompleto: nombreCompleto,
+          correo: correo,
+          telefono: telefono,
+        );
+        _registroExitoso = true;
+        return true;
+      }
+
       // 1. Crear usuario en Auth
       final user = await _authRepository.signUp(
         email: correo,

@@ -12,10 +12,15 @@ Future<void> main() async {
   // llamar a código nativo (Supabase, plugins, etc.)
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Carga las variables de entorno desde el archivo .env
-  await dotenv.load(fileName: '.env');
+  // Carga variables de entorno si existe `.env`.
+  // Si no existe, la app entra en modo demo/local y sigue funcionando.
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    // Modo demo: sin credenciales locales de Supabase.
+  }
 
-  // Inicializa Supabase con las credenciales del .env
+  // Inicializa Supabase solo cuando hay credenciales reales.
   await SupabaseConfig.initialize();
 
   // Arranca la app — toda la lógica vive en App()

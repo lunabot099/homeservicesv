@@ -3,6 +3,7 @@
 library;
 
 import 'package:flutter/foundation.dart';
+import '../../../app/config/app_config.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/perfiles_repository.dart';
 import '../../../data/models/perfil_model.dart';
@@ -37,6 +38,15 @@ class ClientLoginViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (AppConfig.demoMode) {
+        await _sessionController.startDemoSession(
+          role: UserRole.cliente,
+          nombreCompleto: 'Cliente Demo',
+          correo: email,
+        );
+        return true;
+      }
+
       final user = await _authRepository.signIn(
         email: email,
         password: password,
