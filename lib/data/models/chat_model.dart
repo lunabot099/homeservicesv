@@ -13,9 +13,8 @@ class ChatModel {
   final String solicitudId;
   final String clienteId;
   final String trabajadorId;
-  final DateTime? creadoEn;
-  /// Fecha en que se marcarán los mensajes para eliminación (solicitud.completada + 7 días)
-  final DateTime? eliminarMensajesEn;
+  final DateTime? fechaCreacion;
+  final DateTime? fechaActualizacion;
 
   // ── Campos de presentación (NO columnas de BD) ────────────────────────────
   /// Texto del último mensaje — se puebla desde un JOIN/RPC, no desde la tabla `chats`.
@@ -28,12 +27,15 @@ class ChatModel {
     required this.solicitudId,
     required this.clienteId,
     required this.trabajadorId,
-    this.creadoEn,
-    this.eliminarMensajesEn,
+    this.fechaCreacion,
+    this.fechaActualizacion,
     // Presentación
     this.ultimoMensaje,
     this.mensajesNoLeidos,
   });
+
+  /// Alias de compatibilidad para vistas que aún usan `creadoEn`.
+  DateTime? get creadoEn => fechaCreacion;
 
   factory ChatModel.fromMap(Map<String, dynamic> map) {
     return ChatModel(
@@ -41,11 +43,11 @@ class ChatModel {
       solicitudId: map['solicitud_id'] as String,
       clienteId: map['cliente_id'] as String,
       trabajadorId: map['trabajador_id'] as String,
-      creadoEn: map['creado_en'] != null
-          ? DateTime.tryParse(map['creado_en'] as String)
+      fechaCreacion: map['fecha_creacion'] != null
+          ? DateTime.tryParse(map['fecha_creacion'] as String)
           : null,
-      eliminarMensajesEn: map['eliminar_mensajes_en'] != null
-          ? DateTime.tryParse(map['eliminar_mensajes_en'] as String)
+      fechaActualizacion: map['fecha_actualizacion'] != null
+          ? DateTime.tryParse(map['fecha_actualizacion'] as String)
           : null,
     );
   }
@@ -54,8 +56,7 @@ class ChatModel {
         'solicitud_id': solicitudId,
         'cliente_id': clienteId,
         'trabajador_id': trabajadorId,
-        if (eliminarMensajesEn != null)
-          'eliminar_mensajes_en': eliminarMensajesEn!.toIso8601String(),
+        // fecha_creacion y fecha_actualizacion las maneja Supabase.
         // ultimoMensaje y mensajesNoLeidos son de presentación — no se persisten
       };
 

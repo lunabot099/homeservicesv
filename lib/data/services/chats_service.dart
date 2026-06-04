@@ -2,7 +2,8 @@
 /// Servicio para operaciones sobre la tabla `chats`.
 ///
 /// Regla: Un solo chat por solicitud. Se crea al confirmar el servicio.
-/// Los mensajes se configuran para eliminarse 7 días post-finalización.
+/// La base actual usa fecha_creacion/fecha_actualizacion y no tiene columna
+/// eliminar_mensajes_en; la limpieza automática se implementará con SQL posterior.
 library;
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -59,19 +60,19 @@ class ChatsService {
         .from(_table)
         .select()
         .or('cliente_id.eq.$userId,trabajador_id.eq.$userId')
-        .order('creado_en', ascending: false);
+        .order('fecha_creacion', ascending: false);
     return (data as List)
         .map((e) => ChatModel.fromMap(e as Map<String, dynamic>))
         .toList();
   }
 
-  /// Marca la fecha de expiración de mensajes (7 días desde ahora).
-  /// Se llama cuando el servicio se marca como completado.
+  /// Placeholder seguro: la base actual no tiene `eliminar_mensajes_en`.
+  /// Cuando se defina la base final, se puede agregar esa columna o resolverlo
+  /// con una tarea SQL/cron del lado de Supabase.
   Future<void> programarEliminacion(String chatId) async {
-    final expiracion = DateTime.now().add(const Duration(days: 7));
     await _client
         .from(_table)
-        .update({'eliminar_mensajes_en': expiracion.toIso8601String()})
+        .update({'fecha_actualizacion': DateTime.now().toIso8601String()})
         .eq('id', chatId);
   }
 }
