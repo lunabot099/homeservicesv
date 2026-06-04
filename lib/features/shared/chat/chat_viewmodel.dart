@@ -4,7 +4,7 @@
 library;
 
 import 'dart:async';
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import '../../../data/models/chat_model.dart';
 import '../../../data/models/mensaje_chat_model.dart';
@@ -117,16 +117,21 @@ class ChatViewModel extends ChangeNotifier {
   }
 
   /// Envía una imagen: primero la sube a Storage, luego envía la URL.
-  Future<void> enviarImagen(File imageFile) async {
+  /// Usa bytes para ser compatible con Flutter Web.
+  Future<void> enviarImagenBytes({
+    required Uint8List bytes,
+    String contentType = 'image/jpeg',
+  }) async {
     if (_chat == null || usuarioActualId == null) return;
 
     _isSending = true;
     notifyListeners();
     try {
-      final url = await _storageService.uploadChatImage(
+      final url = await _storageService.uploadChatImageBytes(
         chatId: _chat!.id!,
         userId: usuarioActualId!,
-        file: imageFile,
+        bytes: bytes,
+        contentType: contentType,
       );
       await _chatsRepo.enviarImagen(
         chatId: _chat!.id!,

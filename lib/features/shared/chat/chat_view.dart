@@ -4,7 +4,6 @@
 /// Limpieza programada 7 días después de finalizado el servicio.
 library;
 
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -94,7 +93,11 @@ class _ChatViewState extends State<ChatView> {
     final picked =
         await _picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
     if (picked == null) return;
-    await _vm.enviarImagen(File(picked.path));
+    final bytes = await picked.readAsBytes();
+    await _vm.enviarImagenBytes(
+      bytes: bytes,
+      contentType: picked.mimeType ?? 'image/jpeg',
+    );
     _scrollToEnd();
   }
 

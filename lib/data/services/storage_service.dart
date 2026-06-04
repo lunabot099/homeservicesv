@@ -4,10 +4,8 @@
 /// NO hardcodear nombres de bucket aquí — siempre usar Env.bucket*.
 ///
 /// Métodos *Binary trabajan con Uint8List y son compatibles con Flutter Web.
-/// Métodos de File (dart:io) se mantienen para uso en plataformas nativas.
 library;
 
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../app/config/env.dart';
@@ -18,110 +16,22 @@ class StorageService {
   StorageService({SupabaseClient? client})
       : _client = client ?? Supabase.instance.client;
 
-  // ── Método genérico de subida ─────────────────────────────────
-
-  /// Sube [file] al [bucket] en la ruta [path].
-  /// Usa upsert para sobreescribir si ya existe.
-  /// Retorna la URL pública del archivo subido.
-  Future<String> uploadFile({
-    required String bucket,
-    required String path,
-    required File file,
-    String contentType = 'image/jpeg',
-    bool upsert = true,
-  }) async {
-    await _client.storage.from(bucket).upload(
-          path,
-          file,
-          fileOptions: FileOptions(
-            contentType: contentType,
-            upsert: upsert,
-          ),
-        );
-    return _client.storage.from(bucket).getPublicUrl(path);
-  }
-
-  // ── Fotos de perfil ───────────────────────────────────────────
-
-  /// Sube la foto de perfil de un usuario.
-  /// Bucket: perfil-fotos (Env.bucketPerfilFotos)
-  /// Path: {userId}/perfil.jpg
-  Future<String> uploadFotoPerfil({
-    required String userId,
-    required File file,
-  }) async {
-    return uploadFile(
-      bucket: Env.bucketPerfilFotos,
-      path: '$userId/perfil.jpg',
-      file: file,
-    );
-  }
-
-  // ── Documentos del trabajador ─────────────────────────────────
-
-  /// Sube la foto del DUI del trabajador.
-  /// Bucket: dui-documentos (Env.bucketDuiDocumentos)
-  /// Path: {userId}/dui.jpg
-  Future<String> uploadFotoDui({
-    required String userId,
-    required File file,
-  }) async {
-    return uploadFile(
-      bucket: Env.bucketDuiDocumentos,
-      path: '$userId/dui.jpg',
-      file: file,
-    );
-  }
-
-  /// Sube el documento de antecedentes penales del trabajador.
-  /// Bucket: antecedentes-documentos (Env.bucketAntecedentesDocumentos)
-  /// Path: {userId}/antecedentes.{ext}
-  /// [contentType]: 'application/pdf' o 'image/jpeg' según el archivo.
-  Future<String> uploadAntecedentes({
-    required String userId,
-    required File file,
-    String contentType = 'application/pdf',
-  }) async {
-    final ext = contentType == 'application/pdf' ? 'pdf' : 'jpg';
-    return uploadFile(
-      bucket: Env.bucketAntecedentesDocumentos,
-      path: '$userId/antecedentes.$ext',
-      file: file,
-      contentType: contentType,
-    );
-  }
-
-  // ── Solicitudes ───────────────────────────────────────────────
-
-  /// Sube una imagen adjunta a una solicitud de servicio.
-  /// Bucket: solicitudes-imagenes (Env.bucketSolicitudesImagenes)
-  Future<String> uploadSolicitudImagen({
-    required String solicitudId,
-    required int index,
-    required File file,
-  }) async {
-    return uploadFile(
-      bucket: Env.bucketSolicitudesImagenes,
-      path: '$solicitudId/$index.jpg',
-      file: file,
-    );
-  }
-
   // ── Chat ──────────────────────────────────────────────────────
 
-  /// Sube una imagen enviada en el chat.
-  /// Bucket: chat-imagenes (Env.bucketChatImagenes)
-  /// Path: {chatId}/{userId}_{timestamp}.jpg
-  Future<String> uploadChatImage({
+  /// Sube una imagen enviada en el chat usando bytes.
+  /// Compatible con Flutter Web, móvil y escritorio.
+  Future<String> uploadChatImageBytes({
     required String chatId,
     required String userId,
-    required File file,
+    required Uint8List bytes,
+    String contentType = 'image/jpeg',
   }) async {
     final ts = DateTime.now().millisecondsSinceEpoch;
-    return uploadFile(
+    return uploadBinaryData(
       bucket: Env.bucketChatImagenes,
       path: '$chatId/${userId}_$ts.jpg',
-      file: file,
+      bytes: bytes,
+      contentType: contentType,
     );
   }
 
