@@ -14,3 +14,13 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+## Variables de entorno
+
+Este proyecto usa Supabase y requiere un archivo `.env` local.
+
+1. Copia `.env.example` como `.env`.
+2. Llena los valores reales de Supabase y buckets en tu máquina o entorno de despliegue.
+3. No subas `.env` a GitHub.
+
+El archivo `.env` real queda ignorado por Git por seguridad.
